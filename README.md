@@ -35,8 +35,10 @@ ROS2 package for WHILL Model CR
 In your shell:
 ```sh
 cd ~/<your_ros2_ws>/src
-git clone https://github.com/WHILL/ros2_whill_interfaces.git
-git clone https://github.com/WHILL/ros2_whill.git
+# git clone https://github.com/WHILL/ros2_whill_interfaces.git
+# git clone https://github.com/WHILL/ros2_whill.git
+git clone git@github.com:keita1523/ros2_whill_interfaces.git
+git clone git@github.com:keita1523/ros2_whill.git
 cd ~/<your_ros2_ws>
 colcon build --packages-up-to ros2_whill
 source install/local_setup.bash

@@ -148,16 +148,16 @@ int main(int argc, char **argv)
 	rclcpp::init(argc, argv);
 	node = rclcpp::Node::make_shared("whill_modelc_publisher");
 
-	auto whill_modelc_pub         = node->create_publisher<ros2_whill_interfaces::msg::WhillModelC>("/whill/modelc_state");
-	auto whill_modelc_joy         = node->create_publisher<sensor_msgs::msg::Joy>("/whill/states/joy");
-	auto whill_modelc_joint_state = node->create_publisher<sensor_msgs::msg::JointState>("/whill/states/joint_state");
-	auto whill_modelc_imu         = node->create_publisher<sensor_msgs::msg::Imu>("/whill/states/imu");
-	auto whill_modelc_battery     = node->create_publisher<sensor_msgs::msg::BatteryState>("/whill/states/batttery_state");
-	auto whill_modelc_odom        = node->create_publisher<nav_msgs::msg::Odometry>("/whill/odom");
+	auto whill_modelc_pub         = node->create_publisher<ros2_whill_interfaces::msg::WhillModelC>("/whill/modelc_state", 1);
+	auto whill_modelc_joy         = node->create_publisher<sensor_msgs::msg::Joy>("/whill/states/joy", 1);
+	auto whill_modelc_joint_state = node->create_publisher<sensor_msgs::msg::JointState>("/whill/states/joint_state", 1);
+	auto whill_modelc_imu         = node->create_publisher<sensor_msgs::msg::Imu>("/whill/states/imu", 1);
+	auto whill_modelc_battery     = node->create_publisher<sensor_msgs::msg::BatteryState>("/whill/states/batttery_state", 1);
+	auto whill_modelc_odom        = node->create_publisher<nav_msgs::msg::Odometry>("/whill/odom", 1);
 
 	auto clear_odom_srv           = node->create_service<std_srvs::srv::Empty>("/whill/odom/clear", clearOdom);
 	
-	auto whill_speed_profile      = node->create_publisher<ros2_whill_interfaces::msg::WhillSpeedProfile>("/whill/speed_profile");
+	auto whill_speed_profile      = node->create_publisher<ros2_whill_interfaces::msg::WhillSpeedProfile>("/whill/speed_profile", 1);
 
 	tf2_ros::TransformBroadcaster odom_broadcaster_(node);
 
@@ -222,7 +222,7 @@ int main(int argc, char **argv)
 			msg_sp->tm1 = int(recv_buf[8] & 0xff);
 			msg_sp->ta1 = int(recv_buf[9] & 0xff);
 			msg_sp->td1 = int(recv_buf[10] & 0xff);
-			whill_speed_profile->publish(msg_sp);
+			whill_speed_profile->publish(*msg_sp);
 			RCLCPP_INFO(node->get_logger(), "Speed profile %ld is published", msg_sp->s1);
 		}
 	}
@@ -388,10 +388,10 @@ int main(int argc, char **argv)
 					}
 
 					// publish
-					whill_modelc_joy->publish(joy);
-					whill_modelc_joint_state->publish(jointState);
-					whill_modelc_imu->publish(imu);
-					whill_modelc_battery->publish(batteryState);
+					whill_modelc_joy->publish(*joy);
+					whill_modelc_joint_state->publish(*jointState);
+					whill_modelc_imu->publish(*imu);
+					whill_modelc_battery->publish(*batteryState);
 
 					// Publish Odometry
 					auto odom_trans = std::make_shared<geometry_msgs::msg::TransformStamped>();
@@ -408,7 +408,7 @@ int main(int argc, char **argv)
 					odom_msg->header.stamp.nanosec = now - RCL_S_TO_NS(odom_msg->header.stamp.sec);
 					odom_msg->header.frame_id = "odom";
 					odom_msg->child_frame_id = "base_footprint";
-					whill_modelc_odom->publish(odom_msg);
+					whill_modelc_odom->publish(*odom_msg);
 				}
 			}
 		}
