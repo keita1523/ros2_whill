@@ -20,7 +20,7 @@ class TeleopPublisher(Node):
         print("Input f, b, r, l  key, then press Enter key.")
 
     def timer_callback(self): 
-        key = input("f:forward, b:backward, r:right, l:left, s:stop <<")
+        key = input("f:forward, b:backward, r:right, l:left <<")
         print("key=", key)
         if key == 'f':
             self.vel.axes.append(0)
