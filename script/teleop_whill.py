@@ -1,46 +1,52 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import rospy
+# (Reference)[https://demura.net/robot/ros2/20748.html]
+
+import rclpy
+from rclpy.node import Node
 import readchar
-from whill.msg import msgWhillSetJoystick
+from sensor_msgs.msg import Joy
 
+class TeleopPublisher(Node): 
+    def __init__(self):
+        super().__init__('teleop_publisher_node') 
+        self.publisher = self.create_publisher(Joy,'/whill/controller/joy', 10)
+        timer_period = 0.01  # second
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.vel = Joy()
+        self.axes = [0] * 2
+        print("*** my_teleop node ***")
+        print("Input f, b, r, l  key, then press Enter key.")
 
-def main():
+    def timer_callback(self): 
+        key = input("f:forward, b:backward, r:right, l:left, s:stop <<")
+        print("key=", key)
+        if key == 'f':
+            self.vel.axes.append(0)
+            self.vel.axes.append(10)
+        elif key == 'b':
+            self.vel.axes.append(0)
+            self.vel.axes.append(-10)
+        elif key == 'l':
+            self.vel.axes.append(-10)
+            self.vel.axes.append(0)
+        elif key == 'r':
+            self.vel.axes.append(10)
+            self.vel.axes.append(0)
+        else:
+            print("Input f, b, r, l : ") 
 
-    rospy.init_node('teleop_whill', anonymous=True)
-    rospy.loginfo('teleop_whill: start')
+        self.publisher.publish(self.vel) 
+        self.get_logger().info("Velocity: Linear=%f angular=%f" % (self.vel.axes[1], self.vel.axes[0])) 
+        self.vel = Joy()
 
-    teleop_pub = rospy.Publisher('whill_setjoystick', msgWhillSetJoystick, queue_size=10)
+def main(args=None):
+    rclpy.init(args=args)
+    teleop_publisher = TeleopPublisher() 
+    rclpy.spin(teleop_publisher)
+    rclpy.shutdown()
 
-    rospy.loginfo("teleop command -> forward:'w', backward:'x', left:'a', right:'d', kill:'k'")
-    front_val = 10 # TODO to parameter
-    back_val = -10
-    left_val = -20
-    right_val = 20
-
-    r = rospy.Rate(10.0)
-    while not rospy.is_shutdown():
-        msg = msgWhillSetJoystick()
-        msg.front = 0
-        msg.side = 0
-
-        key = readchar.readchar()
-        if key == 'w':
-            msg.front = front_val
-        elif key == 'x':
-            msg.front = back_val
-        elif key == 'a':
-            msg.side = left_val
-        elif key == 'd':
-            msg.side = right_val
-        elif key == 'k':
-            break
-
-        if msg.front != 0 or msg.side != 0:
-            teleop_pub.publish(msg)
-            
-            r.sleep()
 
 if __name__ == '__main__':
     main()
