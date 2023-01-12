@@ -1,4 +1,4 @@
-/* 
+/*
 
 MIT License
 
@@ -24,14 +24,15 @@ SOFTWARE.
 */
 
 /*
-Note that this file instantiates a rclcpp::Node without subclassing it. 
-This was the typical usage model in ROS 1, but this style of coding is 
-not compatible with composing multiple nodes into a single process. 
+Note that this file instantiates a rclcpp::Node without subclassing it.
+This was the typical usage model in ROS 1, but this style of coding is
+not compatible with composing multiple nodes into a single process.
 Thus, it is no longer the recommended style for ROS 2.
 */
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joy.hpp"
+#include "geometry_msgs/msg/twist.hpp"
 
 #include "whill_modelc/com_whill.h"
 #include "ros2_whill_interfaces/srv/set_speed_profile.hpp"
@@ -62,7 +63,7 @@ rclcpp::Node::SharedPtr node = nullptr;
 // Set Speed Profile
 bool set_speed_profile_srv(
     const std::shared_ptr<rmw_request_id_t> request_header,
-    const std::shared_ptr<ros2_whill_interfaces::srv::SetSpeedProfile::Request> request, 
+    const std::shared_ptr<ros2_whill_interfaces::srv::SetSpeedProfile::Request> request,
     const std::shared_ptr<ros2_whill_interfaces::srv::SetSpeedProfile::Response> response)
 {
     (void)request_header;
@@ -81,7 +82,7 @@ bool set_speed_profile_srv(
     {
         RCLCPP_INFO(node->get_logger(), "Speed profile is set");
         sendSetSpeed(whill_fd, request->s1, request->fm1, request->fa1, request->fd1, request->rm1, request->ra1, request->rd1, request->tm1, request->ta1, request->td1);
-        
+
         response->result = 1;
         return true;
     }
@@ -100,7 +101,7 @@ bool set_speed_profile_srv(
         RCLCPP_WARN(node->get_logger(), "td1 must be assingned between 10 - 160");
         response->result = -1;
         return false;
-    }    
+    }
 }
 
 
@@ -130,7 +131,7 @@ bool set_power_srv(
         usleep(10000);
         sendPowerOn(whill_fd);
         usleep(2000);
-        
+
         RCLCPP_INFO(node->get_logger(), "WHILL wakes up");
         response->result = 1;
         return true;
@@ -147,7 +148,7 @@ bool set_power_srv(
 
 // Set Battery Voltage out
 bool set_battery_voltage_out_srv(
-    const std::shared_ptr<rmw_request_id_t> request_header,    
+    const std::shared_ptr<rmw_request_id_t> request_header,
     const std::shared_ptr<ros2_whill_interfaces::srv::SetBatteryVoltageOut::Request> request,
     const std::shared_ptr<ros2_whill_interfaces::srv::SetBatteryVoltageOut::Response> response)
 {
@@ -186,13 +187,23 @@ void whillSetJoyMsgCallback(const sensor_msgs::msg::Joy::SharedPtr joy)
     sendJoystick(whill_fd, joy_front, joy_side);
 }
 
+// Set Velocity
+void whillSetVelocityCallback(const geometry_msgs::msg::Twist::SharedPtr cmd_vel)
+{
+    double linearx  = cmd_vel->linear.x;
+    double angularz = cmd_vel->angular.z;
+
+    // TODO: value check : max1.7m2
+    RCLCPP_INFO(node->get_logger(), "My set velocity linear:%f, angular:%f", linearx, angularz);
+    sendSetVelocity(whill_fd, linearx, angularz);
+}
 
 int main(int argc, char **argv)
 {
     // ROS setup
     rclcpp::init(argc, argv);
     node = rclcpp::Node::make_shared("whill_modelc_controller");
-    
+
     std::string serialport = "/dev/ttyUSB0";
     node->get_parameter("serialport", serialport);
     RCLCPP_INFO(node->get_logger(), "=========================");
@@ -207,6 +218,7 @@ int main(int argc, char **argv)
 
     // Subscribers
     auto whill_setjoy_sub = node->create_subscription<sensor_msgs::msg::Joy>("/whill/controller/joy", rclcpp::QoS(1), whillSetJoyMsgCallback);
+    auto whill_setvelocity_sub = node->create_subscription<geometry_msgs::msg::Twist>("/whill/controller/velocity", rclcpp::QoS(1), whillSetVelocityCallback);
 
     initializeComWHILL(&whill_fd, serialport);
     rclcpp::spin(node);

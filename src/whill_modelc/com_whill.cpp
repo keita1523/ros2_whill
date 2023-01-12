@@ -54,6 +54,9 @@ enum{
      //SET_SPEED_DOWN, 		// removed on Model C
      SET_SPEED_PROFILE, 	// added on Model C
      SET_BATTERY_VOLTAGE_OUT, 	// added on Model C
+     RESERVE1,
+     RESERVE2,
+     SET_VELOCITY,
 };
 
 #define USER_CTRL_DISABLE (0)
@@ -66,7 +69,6 @@ int initializeComWHILL(int *fd,std::string port)
 	  fprintf(stderr, "Can't initizalize UART to communicate with WHILL\n");
 	  return -1;
      }
-     
      return 1;
 }
 
@@ -144,7 +146,7 @@ int sendJoystick(int fd, char fb, char lr)
      cmd[2] = fb;
      cmd[3] = lr;
      return sendWHILLCmd(fd, cmd, num_cmd);
-}	  
+}
 
 int releaseJoystick(int fd)
 {
@@ -156,7 +158,7 @@ int releaseJoystick(int fd)
      cmd[2] = 0;
      cmd[3] = 0;
      return sendWHILLCmd(fd, cmd, num_cmd);
-}	  
+}
 
 //int sendStartSendingData(int fd, int t, char data_set_num)
 int sendStartSendingData(int fd, int t, char data_set_num, char speed_mode) // modified on Model C
@@ -206,7 +208,7 @@ int sendPowerOn(int fd)
      cmd[1] = 1;
 
      return sendWHILLCmd(fd, cmd, num_cmd);
-}     
+}
 
 int sendPowerOff(int fd)
 {
@@ -217,7 +219,7 @@ int sendPowerOff(int fd)
      cmd[1] = 0;
 
      return sendWHILLCmd(fd, cmd, num_cmd);
-}     
+}
 
 /* removed on Model C
 int sendSetForward(int fd, char max_speed, char accel, char deccel)
@@ -231,7 +233,7 @@ int sendSetForward(int fd, char max_speed, char accel, char deccel)
      cmd[3] = deccel;
 
      return sendWHILLCmd(fd, cmd, num_cmd);
-}     
+}
 
 int sendSetReverse(int fd, char max_speed, char accel, char deccel)
 {
@@ -244,7 +246,7 @@ int sendSetReverse(int fd, char max_speed, char accel, char deccel)
      cmd[3] = deccel;
 
      return sendWHILLCmd(fd, cmd, num_cmd);
-}     
+}
 
 int sendSetTurn(int fd, char max_speed, char accel, char deccel)
 {
@@ -293,3 +295,27 @@ int sendSetBatteryOut(int fd, char battery_out)
      return sendWHILLCmd(fd, cmd, num_cmd);
 }
 
+// Experimental, Speed control without Jerk control but only Acceleration control.
+int sendSetVelocity(int fd, double linear,  double angular)
+{
+     const int num_cmd = 6;
+     char cmd[num_cmd];
+     int16_t x = 0, y = 0; // Unit: 0.004km/h
+
+     // Linear
+     y = (linear * 3.6f) / 0.004f;
+
+     // angular
+     const float tread_width = 0.248; // [m]
+     float v = tread_width * angular;  // V=rω [m/s]
+     x = -v * 3.6f / 0.004f * 2.0f; // [m/s] to [km/h]→ 0.004km/h unit, Double for differencial
+
+     cmd[0] = SET_VELOCITY;
+     cmd[1] = USER_CTRL_DISABLE;
+     cmd[2] = (uint8_t)((y >> 8) & 0xff);
+     cmd[3] = (uint8_t)((y >> 0) & 0xff);
+     cmd[4] = (uint8_t)((x >> 8) & 0xff);
+     cmd[5] = (uint8_t)((x >> 0) & 0xff);
+
+     return sendWHILLCmd(fd, cmd, num_cmd);
+}
