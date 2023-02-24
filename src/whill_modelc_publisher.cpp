@@ -363,7 +363,7 @@ int main(int argc, char **argv)
 					jointState->name[0]     = "leftWheel";
 					jointState->position[0] = msg->left_motor_angle;  //Rad
 
-					static double past[2] = {0.0f,0.0f};
+					static double past[2] = {msg->left_motor_angle,msg->right_motor_angle};
 					
 					if(time_diff_ms != 0)jointState->velocity[0] = calc_rad_diff(past[0],jointState->position[0]) / (double(time_diff_ms) / 1000.0f);
 					else jointState->velocity[0] = 0;
