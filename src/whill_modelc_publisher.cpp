@@ -161,12 +161,9 @@ int main(int argc, char **argv)
 
 	tf2_ros::TransformBroadcaster odom_broadcaster_(node);
 
-	double wheel_radius = 0.135;
-	node->get_parameter("wheel_radius", wheel_radius);
-	std::string serialport = "/dev/ttyUSB0";
-	node->get_parameter("serialport", serialport);
-	int send_interval = SEND_INTERVAL;
-	node->get_parameter("send_interval", send_interval);
+	double wheel_radius =  node->declare_parameter("wheel_radius", 0.135);
+	std::string serialport = node->declare_parameter("serialport", "/dev/ttyUSB0");
+	int send_interval = node->declare_parameter("send_interval", SEND_INTERVAL);
 	RCLCPP_INFO(node->get_logger(), "=========================");
 	RCLCPP_INFO(node->get_logger(), "WHILL CR Publisher:");
 	RCLCPP_INFO(node->get_logger(), "    serialport: %s", serialport.c_str());

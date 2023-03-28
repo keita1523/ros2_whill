@@ -1,9 +1,16 @@
-whill_modelc_publisher:
-        ros__parameters:
-                serialport: "/dev/ttyUSB0"
-                wheel_radius: 0.135
-                send_interval: 10
+/**:
+  ros__parameters:
+    serialport: "/dev/ttyUSB0"
+    wheel_radius: 0.135
+    send_interval: 10
 
-whill_modelc_controller:
-        ros__parameters:
-                serialport: "/dev/ttyUSB0"
+    # parameters for speed profile via RS232C
+    fm1: 10
+    fa1: 16
+    fd1: 56
+    rm1: 10
+    ra1: 16
+    rd1: 56
+    tm1: 10
+    ta1: 56
+    td1: 72

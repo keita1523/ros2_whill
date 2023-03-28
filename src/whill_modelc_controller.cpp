@@ -204,8 +204,7 @@ int main(int argc, char **argv)
     rclcpp::init(argc, argv);
     node = rclcpp::Node::make_shared("whill_modelc_controller");
 
-    std::string serialport = "/dev/ttyUSB0";
-    node->get_parameter("serialport", serialport);
+    std::string serialport = node->declare_parameter("serialport", "/dev/ttyUSB0");
     RCLCPP_INFO(node->get_logger(), "=========================");
     RCLCPP_INFO(node->get_logger(), "WHILL CR Controller:");
     RCLCPP_INFO(node->get_logger(), "    serialport: %s", serialport.c_str());
@@ -221,6 +220,34 @@ int main(int argc, char **argv)
     auto whill_setvelocity_sub = node->create_subscription<geometry_msgs::msg::Twist>("/whill/controller/velocity", rclcpp::QoS(1), whillSetVelocityCallback);
 
     initializeComWHILL(&whill_fd, serialport);
+    ros2_whill_interfaces::srv::SetSpeedProfile_Request init_request;
+    init_request.s1 = 4;
+    init_request.fm1 = node->declare_parameter("fm1",10);
+    init_request.fa1 = node->declare_parameter("fa1",16);
+    init_request.fd1 = node->declare_parameter("fd1",56);
+    init_request.rm1 = node->declare_parameter("rm1",10);
+    init_request.ra1 = node->declare_parameter("ra1",16);
+    init_request.rd1 = node->declare_parameter("rd1",56);
+    init_request.tm1 = node->declare_parameter("tm1",10);
+    init_request.ta1 = node->declare_parameter("ta1",56);
+    init_request.td1 = node->declare_parameter("td1",72);
+    if(0 <= init_request.s1 && init_request.s1 <= 5
+        && 8 <= init_request.fm1 && init_request.fm1 <= 80
+        && 10 <= init_request.fa1 && init_request.fa1 <= 90
+        && 40 <= init_request.fd1 && init_request.fd1 <= 160
+        && 8 <= init_request.rm1 && init_request.rm1 <= 30
+        && 10 <= init_request.ra1 && init_request.ra1 <= 50
+        && 40 <= init_request.rd1 && init_request.rd1 <= 80
+        && 8 <= init_request.tm1 && init_request.tm1 <= 35
+        && 10 <= init_request.ta1 && init_request.ta1 <= 100
+        && 40 <= init_request.td1 && init_request.td1 <= 160)
+    {
+        sendSetSpeed(whill_fd, init_request.s1, init_request.fm1, init_request.fa1, init_request.fd1, init_request.rm1, init_request.ra1, init_request.rd1, init_request.tm1, init_request.ta1, init_request.td1);
+    }
+    else
+    {
+        RCLCPP_WARN(node->get_logger(), "wrong parameter is assigned.");
+    }
     rclcpp::spin(node);
 
     closeComWHILL(whill_fd);

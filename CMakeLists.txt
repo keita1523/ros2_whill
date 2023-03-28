@@ -85,5 +85,10 @@ target_link_libraries(whill_modelc_controller
 install(TARGETS whill_modelc_publisher RUNTIME DESTINATION lib/${PROJECT_NAME})
 install(TARGETS whill_modelc_controller RUNTIME DESTINATION lib/${PROJECT_NAME})
 
+install(
+  DIRECTORY params/
+  DESTINATION share/${PROJECT_NAME}
+)
+
 ament_export_dependencies(rosidl_default_runtime)
 ament_package()
